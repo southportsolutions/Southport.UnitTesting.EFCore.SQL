@@ -1,0 +1,24 @@
+jobs:
+- deployment: DeployAppPackage
+  pool:
+    vmImage: $(vmImage)
+
+  variables:
+  - template: ${{parameters.deployYmlChildPath}}
+  environment: ${{variables.environment}}
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        - download: current
+          displayName: 'Download artifact'
+          artifact: $(artifactName)
+
+        - task: NuGetCommand@2
+          displayName: 'Push Nuget'
+          inputs:
+            command: 'push'
+            packagesToPush: '$(Pipeline.Workspace)/$(artifactName)/**/*.nupkg;!$(Pipeline.Workspace)/$(artifactName)/**/*.symbols.nupkg'
+            nuGetFeedType: ${{ variables.nugetFeedType }}
+            publishFeedCredentials: ${{ variables.publishFeedCredentials }}      
+            allowPackageConflicts: false

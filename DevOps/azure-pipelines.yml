@@ -1,0 +1,44 @@
+# only trigger build through main or release branch
+trigger:
+  tags:
+    include:
+      - release@*
+  branches:
+    include:
+      - 'main'
+
+variables:
+- template: 'Variables/variables.yml'
+
+name: $(namePrefix).$(Date:yyyyMMdd)$(Rev:.r)
+
+stages:
+#------------------------Build DEV------------------------------------------
+- stage: 'BuildDev'
+  displayName: 'Build - Dev'
+  dependsOn: []
+  condition: eq(startsWith(variables['Build.SourceBranch'], 'refs/tags/release@'), false)
+  jobs:
+  - template: build.yml
+    parameters: 
+      deployYmlChildPath: Variables/variables.dev.yml
+
+#------------------------Build PROD------------------------------------------
+- stage: 'BuildProd'
+  displayName: 'Build - Prod'
+  dependsOn: []
+  condition: startsWith(variables['Build.SourceBranch'], 'refs/tags/release@')
+  jobs:
+  - template: build.yml
+    parameters: 
+      deployYmlChildPath: Variables/variables.prod.yml
+
+#------------------------Deploy PROD------------------------------------------
+- stage: 'DeployReleaseProd'
+  displayName: 'Deploy to prod (release)'
+  dependsOn: 'BuildProd'
+  condition: succeeded()
+  jobs:
+  - template: deploy.yml
+    parameters: 
+      deployYmlChildPath: Variables/variables.prod.yml

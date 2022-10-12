@@ -1,0 +1,14 @@
+variables:
+  namePrefix:  ${{ replace(variables['Build.SourceBranchName'],'@','-') }}
+
+  ${{ if contains(variables['Build.SourceBranchName'], 'release@') }}:
+    version: ${{ replace(variables['Build.SourceBranchName'],'release@','') }}
+  ${{ else }}:
+    version: '1.0.0-alpha1'  
+    
+  vmImage: 'ubuntu-latest'
+  buildConfiguration: 'Release'
+  projectName: 'Southport.UnitTesting.EFCore.SQL'
+  sonarCloudOrganization: 'southport'
+  sonarCloudProjectKey: 'Southport_UnitTesting_EFCore_SQL'
+  sonarCloudProjectName: 'Southport.UnitTesting.EFCore.SQL'

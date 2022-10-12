@@ -1,0 +1,6 @@
+variables:
+    artifactName: 'prod'
+    environment: 'azure-prod'
+
+    nuGetFeedType: 'external'
+    publishFeedCredentials: 'nuget.org'

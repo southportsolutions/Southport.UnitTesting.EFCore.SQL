@@ -4,7 +4,22 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
+	<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <Authors>Robert Anstett</Authors>
+    <Company>Southport Solutions, LLC</Company>
+    <Product>Southport.UnitTesting.EFCore.SQL</Product>
+    <Description>Southport Solutions EFCore SQL unit testing using docker.</Description>
+    <Copyright>2022</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageIcon>icon.png</PackageIcon>
+    <RepositoryType>GIT</RepositoryType>
+    <PackageTags>Docker EntityFrameworkCore EntityFramework</PackageTags>
+    <PackageReleaseNotes>Initial release.</PackageReleaseNotes>
   </PropertyGroup>
+
+  <ItemGroup>
+    <Content Include="..\icon.png" Link="icon.png" />
+  </ItemGroup>
 
   <ItemGroup>
 	<PackageReference Include="AutoBogus" Version="2.13.1" />

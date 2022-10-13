@@ -233,11 +233,11 @@ public static class DockerSqlDatabaseUtilities
     private static async Task CreateDatabaseIfDoesNotExist(string databasePort)
     {
         await using var sqlConnection = await GetOpenConnection(databasePort);
-        var sqlCommand = new SqlCommand("SELECT count(*) FROM sys.databases WHERE name = 'DataBase')");
+        var sqlCommand = new SqlCommand("SELECT count(*) FROM sys.databases WHERE name = 'DataBase')", sqlConnection);
         var dbExists = (int)(await sqlCommand.ExecuteScalarAsync() ?? 0) > 0;
         if (dbExists)
         {
-            sqlCommand = new SqlCommand($"CREATE DATABASE [{DbName}]");
+            sqlCommand = new SqlCommand($"CREATE DATABASE [{DbName}]", sqlConnection);
             await sqlCommand.ExecuteNonQueryAsync();
         }
     }

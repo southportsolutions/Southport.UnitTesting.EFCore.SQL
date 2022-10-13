@@ -37,7 +37,7 @@ jobs:
       name: Tests
       inputs:
         command: 'test'
-        projects: '**/*Test.csproj'
+        projects: '**/*Tests.csproj'
         arguments: '--configuration $(buildConfiguration) --collect:"XPlat Code Coverage" -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura,opencover'
     
     - task: PublishCodeCoverageResults@1

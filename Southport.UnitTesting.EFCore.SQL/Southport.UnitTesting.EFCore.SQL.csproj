@@ -4,7 +4,8 @@
     <TargetFramework>net6.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
-	<GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+	<IsPackable>true</IsPackable>
+	<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
     <Authors>Robert Anstett</Authors>
     <Company>Southport Solutions, LLC</Company>
     <Product>Southport.UnitTesting.EFCore.SQL</Product>
@@ -18,7 +19,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="..\icon.png" Link="icon.png" />
+	  <None Include="..\icon.png">
+		  <Pack>True</Pack>
+		  <PackagePath></PackagePath>
+	  </None>
   </ItemGroup>
 
   <ItemGroup>
@@ -33,6 +37,12 @@
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.10" />
     <PackageReference Include="Respawn" Version="6.0.0" />
     <PackageReference Include="xunit" Version="2.4.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="FunctionTestBase.cs">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Compile>
   </ItemGroup>
 
 </Project>

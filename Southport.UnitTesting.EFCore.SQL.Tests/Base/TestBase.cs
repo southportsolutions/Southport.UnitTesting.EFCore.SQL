@@ -4,7 +4,7 @@ using Xunit.Abstractions;
 
 namespace Southport.UnitTesting.EFCore.SQL.Tests.Base;
 
-public class TestBase : FunctionTestBase<TestDbContext>
+public class TestBase : UnitTestBase<TestDbContext>
 {
     protected override string MigrationAssembly => null;
 

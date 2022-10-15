@@ -8,7 +8,7 @@ using Xunit.Abstractions;
 
 namespace Southport.UnitTesting.EFCore.SQL;
 
-public abstract class FunctionTestBase<TDbContext> where TDbContext : DbContext
+public abstract class UnitTestBase<TDbContext> where TDbContext : DbContext
 {
     protected ITestOutputHelper TestLogger { get; }
 
@@ -16,7 +16,7 @@ public abstract class FunctionTestBase<TDbContext> where TDbContext : DbContext
 
     protected bool IsInitialized;
     protected bool IsInitializing;
-
+    
     protected IConfigurationRoot Configuration;
     protected Respawner Checkpoint;
 
@@ -24,23 +24,13 @@ public abstract class FunctionTestBase<TDbContext> where TDbContext : DbContext
 
     private string _dockerSqlPort;
 
-    private string _connectionString;
-    protected virtual string ConnectionString
-    {
-        get
-        {
-            if (!string.IsNullOrWhiteSpace(_connectionString)) return _connectionString;
-
-            _connectionString = Configuration.GetConnectionString("DbConnectionString");
-            return _connectionString;
-        }
-    }
+    protected string ConnectionString;
 
     protected IServiceScope ServiceScope { get; set; }
 
     protected TDbContext DbContext { get; set; }
 
-    protected FunctionTestBase(ITestOutputHelper testLogger)
+    protected UnitTestBase(ITestOutputHelper testLogger)
     {
         TestLogger = testLogger;
     }
@@ -97,13 +87,9 @@ public abstract class FunctionTestBase<TDbContext> where TDbContext : DbContext
         IsInitializing = true;
 
         _dockerSqlPort = await DockerSqlDatabaseUtilities.EnsureDockerStartedAndGetContainerIdAndPortAsync();
-        var dockerConnectionString = DockerSqlDatabaseUtilities.GetSqlConnectionString(_dockerSqlPort, true);
+        ConnectionString = DockerSqlDatabaseUtilities.GetSqlConnectionString(_dockerSqlPort, true);
 
-        var builder = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddInMemoryCollection(new Dictionary<string, string> { { "UseInMemoryDatabase", "false" }, { "ConnectionStrings:DbConnectionString", dockerConnectionString } })
-            .AddEnvironmentVariables();
-
+        var builder = GetConfigurationBuilder(ConnectionString);
         Configuration = builder.Build();
 
         var services = ConfigureServiceCollection();
@@ -122,6 +108,14 @@ public abstract class FunctionTestBase<TDbContext> where TDbContext : DbContext
 
         IsInitialized = true;
         IsInitializing = false;
+    }
+
+    protected virtual IConfigurationBuilder GetConfigurationBuilder(string connectionString)
+    {
+        return new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddInMemoryCollection(new Dictionary<string, string> { { "UseInMemoryDatabase", "false" }, { "ConnectionStrings:DbConnectionString", connectionString } })
+            .AddEnvironmentVariables();
     }
 
     protected virtual async Task MigrateDatabase()

@@ -11,7 +11,7 @@ namespace Southport.UnitTesting.EFCore.SQL;
 public static class DockerSqlDatabaseUtilities
 {
     public const string DbPassword = "#testingDockerPassword#";
-    public const string DbUser = "SA";
+    public const string DbUser = "sa";
     public const string DbImage = "mcr.microsoft.com/mssql/server";
     public const string DbImageTag = "2019-latest";
 
@@ -233,7 +233,7 @@ public static class DockerSqlDatabaseUtilities
     private static async Task CreateDatabaseIfDoesNotExist(string databasePort)
     {
         await using var sqlConnection = await GetOpenConnection(databasePort);
-        var sqlCommand = new SqlCommand("SELECT count(*) FROM sys.databases WHERE name = 'DataBase'", sqlConnection);
+        var sqlCommand = new SqlCommand($"SELECT count(*) FROM sys.databases WHERE name = '{DbName}'", sqlConnection);
         var dbExists = (int)(await sqlCommand.ExecuteScalarAsync() ?? 0) > 0;
         if (dbExists)
         {

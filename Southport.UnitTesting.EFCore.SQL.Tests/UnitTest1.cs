@@ -14,6 +14,14 @@ namespace Southport.UnitTesting.EFCore.SQL.Tests
             Assert.NotNull(entry);
         }
 
+        [Fact]
+        public async Task Test2()
+        {
+            await InitializeTest();
+            var entry = await DbContext.TestEntities.FirstOrDefaultAsync();
+            Assert.NotNull(entry);
+        }
+
         public UnitTest1(ITestOutputHelper testLogger) : base(testLogger)
         {
         }

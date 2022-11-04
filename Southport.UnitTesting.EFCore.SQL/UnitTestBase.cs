@@ -42,6 +42,13 @@ public abstract class UnitTestBase<TDbContext> where TDbContext : DbContext
         await InitializeServer();
         WriteServerInfoToLog();
 
+        await InitializeScope();
+
+        await ResetState();
+    }
+
+    protected virtual async Task InitializeScope()
+    {
         if (ServiceScope != null)
         {
             ServiceScope.Dispose();
@@ -51,7 +58,6 @@ public abstract class UnitTestBase<TDbContext> where TDbContext : DbContext
         ServiceScope = ScopeFactory.CreateScope();
 
         InitializeDbContext();
-        await ResetState();
     }
 
     protected virtual void WriteServerInfoToLog()

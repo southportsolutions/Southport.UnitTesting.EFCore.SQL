@@ -20,12 +20,15 @@ public static class DockerSqlDatabaseUtilities
 
     public static string DbName = "SQLUnitTests";
 
+    public static int ContainerExpirationHours = 24;
+    public static int MaxSqlAvailabilityWaitSeconds = 120;
+
     public static async Task<string> EnsureDockerStartedAndGetContainerIdAndPortAsync()
     {
-        await CleanupRunningContainers();
-        await CleanupRunningVolumes();
+        string databasePort;
+        await CleanupRunningContainers(ContainerExpirationHours);
+        await CleanupRunningVolumes(ContainerExpirationHours);
         var dockerClient = GetDockerClient();
-        var databasePort = GetFreePort();
 
         // This call ensures that the latest SQL Server Docker image is pulled
         await dockerClient.Images.CreateImageAsync(new ImagesCreateParameters
@@ -44,68 +47,19 @@ public static class DockerSqlDatabaseUtilities
             });
         }
 
-        // create container, if one doesn't already exist
-        var contList = await dockerClient
-            .Containers.ListContainersAsync(new ContainersListParameters() { All = true });
-        var existingCont = contList
-            .Where(c => c.Names.Any(n => n.Contains(DbContainerName))).FirstOrDefault();
+        var existingCont = await GetExistingContainer(dockerClient);
+        if (existingCont == null) return await CreateContainer(dockerClient);
+        if (existingCont.State != "exited") return existingCont.Ports.First().PublicPort.ToString();
 
-        if (existingCont == null)
-        {
-            var sqlContainer = await dockerClient
-                .Containers
-                .CreateContainerAsync(new CreateContainerParameters
-                {
-                    Name = DbContainerName,
-                    Image = $"{DbImage}:{DbImageTag}",
-                    Env = new List<string>
-                    {
-                        "ACCEPT_EULA=Y",
-                        $"SA_PASSWORD={DbPassword}"
-                    },
-                    HostConfig = new HostConfig
-                    {
-                        PortBindings = new Dictionary<string, IList<PortBinding>>
-                        {
-                            {
-                                "1433/tcp",
-                                new[]
-                                {
-                                    new PortBinding
-                                    {
-                                        HostPort = databasePort
-                                    }
-                                }
-                            }
-                        },
-                        Binds = new List<string>
-                        {
-                            $"{DbVolumeName}:/Accessioning_data"
-                        }
-                    },
-                });
+        await dockerClient
+            .Containers
+            .StartContainerAsync(existingCont.ID, new ContainerStartParameters());
 
-            await dockerClient
-                .Containers
-                .StartContainerAsync(sqlContainer.ID, new ContainerStartParameters());
-
-            await WaitUntilDatabaseAvailableAsync(databasePort);
-            await CreateDatabaseIfDoesNotExist(databasePort);
-            return databasePort;
-        }
-
-        if (existingCont.State == "exited")
-        {
-            await dockerClient
-                .Containers
-                .StartContainerAsync(existingCont.ID, new ContainerStartParameters());
-
-            await WaitUntilDatabaseAvailableAsync(databasePort);
-            await CreateDatabaseIfDoesNotExist(databasePort);
-            return databasePort;
-        }
-
-        return existingCont.Ports.First().PublicPort.ToString();
+        existingCont = await GetExistingContainer(dockerClient);
+        databasePort = existingCont.Ports.First().PublicPort.ToString();
+        await WaitUntilDatabaseAvailableAsync(databasePort);
+        await CreateDatabaseIfDoesNotExist(databasePort);
+        return databasePort;
     }
 
     private static bool IsRunningOnWindows()
@@ -122,8 +76,61 @@ public static class DockerSqlDatabaseUtilities
             .CreateClient();
     }
 
-    private static async Task CleanupRunningContainers(int hoursTillExpiration = -24)
+    private static async Task<ContainerListResponse> GetExistingContainer(DockerClient dockerClient)
     {
+        var contList = await dockerClient
+            .Containers.ListContainersAsync(new ContainersListParameters() { All = true });
+        return contList.Where(c => c.Names.Any(n => n.Contains(DbContainerName))).FirstOrDefault();
+    }
+
+    private static async Task<string> CreateContainer(DockerClient dockerClient)
+    {
+        var databasePort = GetFreePort();
+        var sqlContainer = await dockerClient
+            .Containers
+            .CreateContainerAsync(new CreateContainerParameters
+            {
+                Name = DbContainerName,
+                Image = $"{DbImage}:{DbImageTag}",
+                Env = new List<string>
+                {
+                    "ACCEPT_EULA=Y",
+                    $"SA_PASSWORD={DbPassword}"
+                },
+                HostConfig = new HostConfig
+                {
+                    PortBindings = new Dictionary<string, IList<PortBinding>>
+                    {
+                        {
+                            "1433/tcp",
+                            new[]
+                            {
+                                new PortBinding
+                                {
+                                    HostPort = databasePort
+                                }
+                            }
+                        }
+                    },
+                    Binds = new List<string>
+                    {
+                        $"{DbVolumeName}:/Accessioning_data"
+                    }
+                },
+            });
+
+        await dockerClient
+            .Containers
+            .StartContainerAsync(sqlContainer.ID, new ContainerStartParameters());
+
+        await WaitUntilDatabaseAvailableAsync(databasePort);
+        await CreateDatabaseIfDoesNotExist(databasePort);
+        return databasePort;
+    }
+
+    private static async Task CleanupRunningContainers(int hoursTillExpiration)
+    {
+        hoursTillExpiration *= -1;
         var dockerClient = GetDockerClient();
 
         var runningContainers = await dockerClient.Containers
@@ -135,22 +142,22 @@ public static class DockerSqlDatabaseUtilities
             var expiration = hoursTillExpiration > 0
                 ? hoursTillExpiration * -1
                 : hoursTillExpiration;
-            if (runningContainer.Created < DateTime.UtcNow.AddHours(expiration))
+            if (runningContainer.Created >= DateTime.UtcNow.AddHours(expiration)) continue;
+
+            try
             {
-                try
-                {
-                    await EnsureDockerContainersStoppedAndRemovedAsync(runningContainer.ID);
-                }
-                catch
-                {
-                    // Ignoring failures to stop running containers
-                }
+                await EnsureDockerContainersStoppedAndRemovedAsync(runningContainer.ID);
+            }
+            catch
+            {
+                // Ignoring failures to stop running containers
             }
         }
     }
 
-    private static async Task CleanupRunningVolumes(int hoursTillExpiration = -24)
+    private static async Task CleanupRunningVolumes(int hoursTillExpiration)
     {
+        hoursTillExpiration *= -1;
         var dockerClient = GetDockerClient();
 
         var runningVolumes = await dockerClient.Volumes.ListAsync();
@@ -161,16 +168,15 @@ public static class DockerSqlDatabaseUtilities
             var expiration = hoursTillExpiration > 0
                 ? hoursTillExpiration * -1
                 : hoursTillExpiration;
-            if (DateTime.Parse(runningVolume.CreatedAt) < DateTime.UtcNow.AddHours(expiration))
+            if (DateTime.Parse(runningVolume.CreatedAt) >= DateTime.UtcNow.AddHours(expiration)) continue;
+
+            try
             {
-                try
-                {
-                    await EnsureDockerVolumesRemovedAsync(runningVolume.Name);
-                }
-                catch
-                {
-                    // Ignoring failures to stop running containers
-                }
+                await EnsureDockerVolumesRemovedAsync(runningVolume.Name);
+            }
+            catch
+            {
+                // Ignoring failures to stop running containers
             }
         }
     }
@@ -193,8 +199,7 @@ public static class DockerSqlDatabaseUtilities
     private static async Task WaitUntilDatabaseAvailableAsync(string databasePort)
     {
         var start = DateTime.UtcNow;
-        const int maxWaitTimeSeconds = 120;
-        while (start.AddSeconds(maxWaitTimeSeconds) > DateTime.UtcNow)
+        while (start.AddSeconds(MaxSqlAvailabilityWaitSeconds) > DateTime.UtcNow)
         {
             try
             {
@@ -208,7 +213,7 @@ public static class DockerSqlDatabaseUtilities
             }
         }
 
-        throw new Exception($"Connection to the SQL docker database could not be established within {maxWaitTimeSeconds} seconds.");
+        throw new Exception($"Connection to the SQL docker database could not be established within {MaxSqlAvailabilityWaitSeconds} seconds.");
     }
 
     private static string GetFreePort()
@@ -235,7 +240,7 @@ public static class DockerSqlDatabaseUtilities
         await using var sqlConnection = await GetOpenConnection(databasePort);
         var sqlCommand = new SqlCommand($"SELECT count(*) FROM sys.databases WHERE name = '{DbName}'", sqlConnection);
         var dbExists = (int)(await sqlCommand.ExecuteScalarAsync() ?? 0) > 0;
-        if (dbExists)
+        if (!dbExists)
         {
             sqlCommand = new SqlCommand($"CREATE DATABASE [{DbName}]", sqlConnection);
             await sqlCommand.ExecuteNonQueryAsync();

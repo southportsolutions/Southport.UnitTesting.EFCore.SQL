@@ -10,6 +10,7 @@ public class TestBase : UnitTestBase<TestDbContext>
 
     protected TestBase(ITestOutputHelper testLogger) : base(testLogger)
     {
+        DockerSqlDatabaseUtilities.ContainerExpirationHours = 1;
     }
 
     protected override async Task ResetState()

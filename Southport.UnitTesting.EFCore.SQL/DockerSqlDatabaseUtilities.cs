@@ -25,7 +25,6 @@ public static class DockerSqlDatabaseUtilities
 
     public static async Task<string> EnsureDockerStartedAndGetContainerIdAndPortAsync()
     {
-        string databasePort;
         await CleanupRunningContainers(ContainerExpirationHours);
         await CleanupRunningVolumes(ContainerExpirationHours);
         var dockerClient = GetDockerClient();
@@ -56,7 +55,7 @@ public static class DockerSqlDatabaseUtilities
             .StartContainerAsync(existingCont.ID, new ContainerStartParameters());
 
         existingCont = await GetExistingContainer(dockerClient);
-        databasePort = existingCont.Ports.First().PublicPort.ToString();
+        var databasePort = existingCont.Ports.First().PublicPort.ToString();
         await WaitUntilDatabaseAvailableAsync(databasePort);
         await CreateDatabaseIfDoesNotExist(databasePort);
         return databasePort;

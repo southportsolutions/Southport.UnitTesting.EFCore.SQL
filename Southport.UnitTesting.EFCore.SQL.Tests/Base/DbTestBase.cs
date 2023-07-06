@@ -4,11 +4,11 @@ using Xunit.Abstractions;
 
 namespace Southport.UnitTesting.EFCore.SQL.Tests.Base;
 
-public class TestBase : UnitTestBase<TestDbContext>
+public class DbTestBase : SouthportUnitTestBase<TestDbContext>
 {
     protected override string MigrationAssembly => null;
 
-    protected TestBase(ITestOutputHelper testLogger) : base(testLogger)
+    protected DbTestBase(ITestOutputHelper testLogger) : base(testLogger)
     {
         DockerSqlDatabaseUtilities.ContainerExpirationHours = 1;
     }

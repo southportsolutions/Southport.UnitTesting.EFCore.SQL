@@ -8,37 +8,38 @@ using Xunit.Abstractions;
 
 namespace Southport.UnitTesting.EFCore.SQL;
 
-public abstract class UnitTestBase<TDbContext> where TDbContext : DbContext
+[Obsolete($"Use {nameof(SouthportUnitTestBase)}.")]
+public abstract class UnitTestBase<TDbContext> : SouthportUnitTestBase<TDbContext> where TDbContext : DbContext
 {
-    protected ITestOutputHelper TestLogger { get; }
+    protected UnitTestBase(ITestOutputHelper testLogger) : base(testLogger)
+    {
+    }
+}
 
+public abstract class SouthportUnitTestBase<TDbContext> : SouthportUnitTestBase where TDbContext : DbContext
+{
     protected virtual string MigrationAssembly => "Southport.EFCore.SQL";
 
     protected bool IsInitialized;
     protected bool IsInitializing;
     
-    protected IConfigurationRoot Configuration;
     protected Respawner Checkpoint;
-
-    protected IServiceScopeFactory ScopeFactory;
+    
 
     private string _dockerSqlPort;
 
     protected string ConnectionString;
-
-    protected IServiceScope ServiceScope { get; set; }
+    
 
     protected TDbContext DbContext { get; set; }
 
-    protected UnitTestBase(ITestOutputHelper testLogger)
+    protected SouthportUnitTestBase(ITestOutputHelper testLogger) : base(testLogger)
     {
-        TestLogger = testLogger;
     }
 
 
-    protected virtual async Task InitializeTest()
+    protected override async Task InitializeTest()
     {
-
         await InitializeServer();
         WriteServerInfoToLog();
 
@@ -47,16 +48,9 @@ public abstract class UnitTestBase<TDbContext> where TDbContext : DbContext
         await ResetState();
     }
 
-    protected virtual async Task InitializeScope()
+    protected override async Task InitializeScope()
     {
-        if (ServiceScope != null)
-        {
-            ServiceScope.Dispose();
-            ServiceScope = null;
-        }
-
-        ServiceScope = ScopeFactory.CreateScope();
-
+        await base.InitializeScope();
         InitializeDbContext();
     }
 
@@ -95,12 +89,7 @@ public abstract class UnitTestBase<TDbContext> where TDbContext : DbContext
         _dockerSqlPort = await DockerSqlDatabaseUtilities.EnsureDockerStartedAndGetContainerIdAndPortAsync();
         ConnectionString = DockerSqlDatabaseUtilities.GetSqlConnectionString(_dockerSqlPort, true);
 
-        var builder = GetConfigurationBuilder(ConnectionString);
-        Configuration = builder.Build();
-
-        var services = ConfigureServiceCollection();
-
-        ScopeFactory = services.BuildServiceProvider().GetService<IServiceScopeFactory>();
+        InitializeDependencyInjection(ConnectionString);
         
         await MigrateDatabase();
 
@@ -116,7 +105,7 @@ public abstract class UnitTestBase<TDbContext> where TDbContext : DbContext
         IsInitializing = false;
     }
 
-    protected virtual IConfigurationBuilder GetConfigurationBuilder(string connectionString)
+    protected override IConfigurationBuilder GetConfigurationBuilder(string connectionString)
     {
         return new ConfigurationBuilder()
             .SetBasePath(Directory.GetCurrentDirectory())
@@ -132,7 +121,7 @@ public abstract class UnitTestBase<TDbContext> where TDbContext : DbContext
         await context.Database.MigrateAsync();
     }
 
-    protected virtual ServiceCollection ConfigureServiceCollection()
+    protected override ServiceCollection ConfigureServiceCollection()
     {
         var services = new ServiceCollection();
         services.AddDbContext<TDbContext>(options =>
@@ -158,11 +147,6 @@ public abstract class UnitTestBase<TDbContext> where TDbContext : DbContext
     protected virtual void InitializeDbContext()
     {
         DbContext = GetService<TDbContext>();
-    }
-
-    protected virtual T GetService<T>()
-    {
-        return ServiceScope.ServiceProvider.GetService<T>();
     }
 
     #region Add Fake Items

@@ -4,7 +4,7 @@ using Xunit.Abstractions;
 
 namespace Southport.UnitTesting.EFCore.SQL.Tests
 {
-    public class UnitTest1 : TestBase
+    public class DbUnitTets : DbTestBase
     {
         [Fact]
         public async Task Test1()
@@ -22,7 +22,7 @@ namespace Southport.UnitTesting.EFCore.SQL.Tests
             Assert.NotNull(entry);
         }
 
-        public UnitTest1(ITestOutputHelper testLogger) : base(testLogger)
+        public DbUnitTets(ITestOutputHelper testLogger) : base(testLogger)
         {
         }
     }

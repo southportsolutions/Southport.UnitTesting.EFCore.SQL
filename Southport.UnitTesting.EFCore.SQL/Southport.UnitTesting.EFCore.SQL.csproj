@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net6.0;net7.0</TargetFrameworks>
+    <TargetFrameworks>net8.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>disable</Nullable>
 	<IsPackable>true</IsPackable>
@@ -10,12 +10,11 @@
     <Company>Southport Solutions, LLC</Company>
     <Product>Southport.UnitTesting.EFCore.SQL</Product>
     <Description>Southport Solutions EFCore SQL unit testing using docker.</Description>
-    <Copyright>2022</Copyright>
+    <Copyright>© Southport Solutions, LLC. All rights reserved.</Copyright>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageIcon>icon.png</PackageIcon>
     <RepositoryType>GIT</RepositoryType>
     <PackageTags>Docker EntityFrameworkCore EntityFramework</PackageTags>
-    <PackageReleaseNotes>Initial release.</PackageReleaseNotes>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,21 +26,16 @@
 
   <ItemGroup>
 	<PackageReference Include="AutoBogus" Version="2.13.1" />
-	<PackageReference Include="AutoFixture.AutoMoq" Version="4.18.0" />
+	<PackageReference Include="AutoFixture.AutoMoq" Version="4.18.1" />
     <PackageReference Include="Docker.DotNet" Version="3.125.15" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" Condition="'$(TargetFramework)' == 'net7.0'" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="6.0.1" Condition="'$(TargetFramework)' == 'net6.0'" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="7.0.0" Condition="'$(TargetFramework)' == 'net7.0'" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.1" Condition="'$(TargetFramework)' == 'net6.0'" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="7.0.0" Condition="'$(TargetFramework)' == 'net7.0'" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="6.0.1" Condition="'$(TargetFramework)' == 'net6.0'" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="7.0.0" Condition="'$(TargetFramework)' == 'net7.0'" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="6.0.0" Condition="'$(TargetFramework)' == 'net6.0'" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.1" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="7.0.8" Condition="'$(TargetFramework)' == 'net7.0'" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="6.0.19" Condition="'$(TargetFramework)' == 'net6.0'" />
-    <PackageReference Include="Respawn" Version="6.0.0" />
-    <PackageReference Include="xunit" Version="2.4.2" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
+    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.2" />
+    <PackageReference Include="Respawn" Version="6.2.1" />
+    <PackageReference Include="xunit" Version="2.7.0" />
   </ItemGroup>
 
   <ItemGroup>

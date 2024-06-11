@@ -28,11 +28,15 @@ public abstract class SouthportUnitTestBase
 
     protected virtual void InitializeDependencyInjection(string connectionString = null)
     {
-        if (Configuration != null) return;
+        if (Configuration != null) CreateScopeFactory();
 
         var builder = GetConfigurationBuilder(connectionString);
         Configuration = builder.Build();
+        CreateScopeFactory();
+    }
 
+    protected virtual void CreateScopeFactory()
+    {
         var services = ConfigureServiceCollection();
 
         ScopeFactory = services.BuildServiceProvider().GetService<IServiceScopeFactory>();

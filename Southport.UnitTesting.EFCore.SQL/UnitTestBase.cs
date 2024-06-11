@@ -20,15 +20,15 @@ public abstract class SouthportUnitTestBase<TDbContext> : SouthportUnitTestBase 
 {
     protected virtual string MigrationAssembly => "Southport.EFCore.SQL";
 
-    protected bool IsInitialized;
-    protected bool IsInitializing;
+    protected static bool IsInitialized;
+    protected static bool IsInitializing;
     
-    protected Respawner Checkpoint;
+    protected static Respawner Checkpoint;
     
 
-    private string _dockerSqlPort;
+    private static string _dockerSqlPort;
 
-    protected string ConnectionString;
+    protected static string ConnectionString;
     
 
     protected TDbContext DbContext { get; set; }
@@ -43,6 +43,7 @@ public abstract class SouthportUnitTestBase<TDbContext> : SouthportUnitTestBase 
         await InitializeServer();
         WriteServerInfoToLog();
 
+        InitializeDependencyInjection();
         await InitializeScope();
 
         await ResetState();

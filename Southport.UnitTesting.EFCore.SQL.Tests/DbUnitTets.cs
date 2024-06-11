@@ -12,6 +12,7 @@ namespace Southport.UnitTesting.EFCore.SQL.Tests
             await InitializeTest();
             var entry = await DbContext.TestEntities.FirstOrDefaultAsync();
             Assert.NotNull(entry);
+            Assert.Equal(1, await DbContext.TestEntities.CountAsync());
         }
 
         [Fact]
@@ -20,6 +21,7 @@ namespace Southport.UnitTesting.EFCore.SQL.Tests
             await InitializeTest();
             var entry = await DbContext.TestEntities.FirstOrDefaultAsync();
             Assert.NotNull(entry);
+            Assert.Equal(1, await DbContext.TestEntities.CountAsync());
         }
 
         public DbUnitTets(ITestOutputHelper testLogger) : base(testLogger)

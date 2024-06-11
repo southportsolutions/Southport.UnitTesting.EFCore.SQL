@@ -14,7 +14,7 @@ public static class DockerSqlDatabaseUtilities
     public const string DbUser = "sa";
 
     public static string DbImage = "mcr.microsoft.com/mssql/server";
-    public static string DbImageTag = "2019-latest";
+    public static string DbImageTag = "2022-latest";
 
     public static string DbContainerName = "Docker_SQL_UnitTests";
     public static string DbVolumeName = "Docker_SQL_UnitTests_Volume";
@@ -31,10 +31,21 @@ public static class DockerSqlDatabaseUtilities
         var dockerClient = GetDockerClient();
 
         // This call ensures that the latest SQL Server Docker image is pulled
-        await dockerClient.Images.CreateImageAsync(new ImagesCreateParameters
+        var createImageCount = 0;
+        do
         {
-            FromImage = $"{DbImage}:{DbImageTag}"
-        }, null, new Progress<JSONMessage>());
+            try
+            {
+                await dockerClient.Images.CreateImageAsync(new ImagesCreateParameters { FromImage = $"{DbImage}:{DbImageTag}" }, null, new Progress<JSONMessage>());
+                break;
+            }
+            catch (DockerApiException e)
+            {
+                Thread.Sleep(2000);
+                createImageCount++;
+            }
+
+        } while (createImageCount < 2);
 
         // create a volume, if one doesn't already exist
         await ManageVolumes(dockerClient);

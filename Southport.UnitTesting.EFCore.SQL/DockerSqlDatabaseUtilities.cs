@@ -24,10 +24,10 @@ public static class DockerSqlDatabaseUtilities
     public static int ContainerExpirationHours = 24;
     public static int MaxSqlAvailabilityWaitSeconds = 120;
 
-    public static async Task<string> EnsureDockerStartedAndGetContainerIdAndPortAsync()
+    public static async Task<string> EnsureDockerStartedAndGetContainerIdAndPortAsync(bool forceCleanup = false)
     {
-        await CleanupRunningContainers(ContainerExpirationHours);
-        await CleanupRunningVolumes(ContainerExpirationHours);
+        await CleanupRunningContainers(forceCleanup ? 0 : ContainerExpirationHours);
+        await CleanupRunningVolumes(forceCleanup ? 0 : ContainerExpirationHours);
         var dockerClient = GetDockerClient();
 
         // This call ensures that the latest SQL Server Docker image is pulled

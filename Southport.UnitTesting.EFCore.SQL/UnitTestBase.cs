@@ -85,13 +85,31 @@ public abstract class SouthportUnitTestBase<TDbContext> : SouthportUnitTestBase 
         }
 
         IsInitializing = true;
+        var migrated = false;
+        var migrationAttempts = 0;
+        while (!migrated)
+        {
 
-        _dockerSqlPort = await DockerSqlDatabaseUtilities.EnsureDockerStartedAndGetContainerIdAndPortAsync();
-        ConnectionString = DockerSqlDatabaseUtilities.GetSqlConnectionString(_dockerSqlPort, true);
+            _dockerSqlPort = await DockerSqlDatabaseUtilities.EnsureDockerStartedAndGetContainerIdAndPortAsync(migrationAttempts>0);
+            ConnectionString = DockerSqlDatabaseUtilities.GetSqlConnectionString(_dockerSqlPort, true);
 
-        InitializeDependencyInjection(ConnectionString);
-        
-        await MigrateDatabase();
+            InitializeDependencyInjection(ConnectionString);
+            
+            try
+            {
+                await MigrateDatabase();
+                migrated = true;
+            }
+            catch (Exception ex)
+            {
+                TestLogger.WriteLine($"Error migrating database: {ex.Message}");
+                migrationAttempts++;
+                if (migrationAttempts >= 2)
+                {
+                    throw new Exception($"Failed to migrate database after {migrationAttempts} attempts. Error: {ex.Message}");
+                }
+            }
+        }
 
         Checkpoint = await Respawner.CreateAsync(ConnectionString, new RespawnerOptions()
         {

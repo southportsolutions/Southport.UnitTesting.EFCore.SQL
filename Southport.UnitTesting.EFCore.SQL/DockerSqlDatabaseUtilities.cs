@@ -21,11 +21,19 @@ public static class DockerSqlDatabaseUtilities
 
     public static string DbName = "SQLUnitTests";
 
+    public static string ActivePortNumber;
+
     public static int ContainerExpirationHours = 24;
     public static int MaxSqlAvailabilityWaitSeconds = 120;
 
     public static async Task<string> EnsureDockerStartedAndGetContainerIdAndPortAsync(bool forceCleanup = false)
     {
+        if (!string.IsNullOrWhiteSpace(ActivePortNumber))
+        {
+            await CreateDatabaseIfDoesNotExist(ActivePortNumber);
+            return ActivePortNumber;
+        }
+        
         await CleanupRunningContainers(forceCleanup ? 0 : ContainerExpirationHours);
         await CleanupRunningVolumes(forceCleanup ? 0 : ContainerExpirationHours);
         var dockerClient = GetDockerClient();
@@ -46,10 +54,10 @@ public static class DockerSqlDatabaseUtilities
         await StartContainer(dockerClient, existingCont.ID);
 
         existingCont = await GetExistingContainer(dockerClient);
-        var databasePort = existingCont.Ports.First().PublicPort.ToString();
-        await WaitUntilDatabaseAvailableAsync(databasePort);
-        await CreateDatabaseIfDoesNotExist(databasePort);
-        return databasePort;
+        ActivePortNumber = existingCont.Ports.First().PublicPort.ToString();
+        await WaitUntilDatabaseAvailableAsync(ActivePortNumber);
+        await CreateDatabaseIfDoesNotExist(ActivePortNumber);
+        return ActivePortNumber;
     }
 
     private static async Task ManageVolumes(DockerClient dockerClient)

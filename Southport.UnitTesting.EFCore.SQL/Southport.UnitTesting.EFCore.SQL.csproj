@@ -1,50 +1,53 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFrameworks>net8.0;net9.0</TargetFrameworks>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>disable</Nullable>
-	<IsPackable>true</IsPackable>
-	<GeneratePackageOnBuild>False</GeneratePackageOnBuild>
-    <Authors>Robert Anstett</Authors>
-    <Company>Southport Solutions, LLC</Company>
-    <Product>Southport.UnitTesting.EFCore.SQL</Product>
-    <Description>Southport Solutions EFCore SQL unit testing using docker.</Description>
-    <Copyright>© Southport Solutions, LLC. All rights reserved.</Copyright>
-    <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageIcon>icon.png</PackageIcon>
-    <RepositoryType>GIT</RepositoryType>
-    <PackageTags>Docker EntityFrameworkCore EntityFramework</PackageTags>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>disable</Nullable>
+        <IsPackable>true</IsPackable>
+        <GeneratePackageOnBuild>False</GeneratePackageOnBuild>
+        <Authors>Robert Anstett</Authors>
+        <Company>Southport Solutions, LLC</Company>
+        <Product>Southport.UnitTesting.EFCore.SQL</Product>
+        <Description>Southport Solutions EFCore SQL unit testing using docker.</Description>
+        <Copyright>© Southport Solutions, LLC. All rights reserved.</Copyright>
+        <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <PackageIcon>icon.png</PackageIcon>
+        <RepositoryType>GIT</RepositoryType>
+        <PackageTags>Docker EntityFrameworkCore EntityFramework</PackageTags>
+    </PropertyGroup>
 
-  <ItemGroup>
-	  <None Include="..\icon.png">
-		  <Pack>True</Pack>
-		  <PackagePath></PackagePath>
-	  </None>
-  </ItemGroup>
+    <ItemGroup>
+        <None Include="..\icon.png">
+            <Pack>True</Pack>
+            <PackagePath></PackagePath>
+        </None>
+    </ItemGroup>
 
-  <ItemGroup>
-	<PackageReference Include="AutoBogus" Version="2.13.1" />
-	<PackageReference Include="AutoFixture.AutoMoq" Version="4.18.1" />
-    <PackageReference Include="Docker.DotNet" Version="3.125.15" />
-    <PackageReference Include="Microsoft.Extensions.Configuration" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Data.SqlClient" Version="5.1.5" />
-    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="8.0.2" />
-    <PackageReference Include="Respawn" Version="6.2.1" />
-    <PackageReference Include="xunit" Version="2.7.0" />
-  </ItemGroup>
+    <ItemGroup>
+        <PackageReference Include="AutoBogus" Version="2.13.1"/>
+        <PackageReference Include="AutoFixture.AutoMoq" Version="4.18.1"/>
+        <PackageReference Include="Docker.DotNet" Version="3.125.15"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.11" Condition="'$(TargetFramework)' == 'net9.0'"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="10.0.0" Condition="'$(TargetFramework)' == 'net10.0'"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.11" Condition="'$(TargetFramework)' == 'net9.0'"/>
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="10.0.0" Condition="'$(TargetFramework)' == 'net10.0'"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="9.0.11" Condition="'$(TargetFramework)' == 'net9.0'"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.EnvironmentVariables" Version="10.0.0" Condition="'$(TargetFramework)' == 'net10.0'"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.11" Condition="'$(TargetFramework)' == 'net9.0'"/>
+        <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="10.0.0" Condition="'$(TargetFramework)' == 'net10.0'"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.0.11" Condition="'$(TargetFramework)' == 'net9.0'"/>
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.0" Condition="'$(TargetFramework)' == 'net10.0'"/>
+        <PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.3" Condition="'$(TargetFramework)' == 'net9.0'"/>
+        <PackageReference Include="Microsoft.Data.SqlClient" Version="6.1.3" Condition="'$(TargetFramework)' == 'net10.0'"/>
+        <PackageReference Include="Respawn" Version="7.0.0"/>
+        <PackageReference Include="xunit" Version="2.9.3"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <Compile Update="SouthportUnitTestBase.cs">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Compile>
-    <Compile Update="UnitTestBase.cs">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Compile>
-  </ItemGroup>
+    <ItemGroup>
+        <Compile Update="SouthportUnitTestBase.cs">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </Compile>
+    </ItemGroup>
 
 </Project>

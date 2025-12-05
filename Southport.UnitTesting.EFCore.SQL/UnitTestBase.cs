@@ -1,20 +1,12 @@
 ﻿using AutoBogus;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Respawn;
-using Respawn.Graph;
 using Xunit.Abstractions;
 
 namespace Southport.UnitTesting.EFCore.SQL;
-
-[Obsolete($"Use {nameof(SouthportUnitTestBase)}.")]
-public abstract class UnitTestBase<TDbContext> : SouthportUnitTestBase<TDbContext> where TDbContext : DbContext
-{
-    protected UnitTestBase(ITestOutputHelper testLogger) : base(testLogger)
-    {
-    }
-}
 
 public abstract class SouthportUnitTestBase<TDbContext> : SouthportUnitTestBase where TDbContext : DbContext
 {
@@ -36,7 +28,6 @@ public abstract class SouthportUnitTestBase<TDbContext> : SouthportUnitTestBase 
     protected SouthportUnitTestBase(ITestOutputHelper testLogger) : base(testLogger)
     {
     }
-
 
     protected override async Task InitializeTest()
     {
@@ -111,13 +102,14 @@ public abstract class SouthportUnitTestBase<TDbContext> : SouthportUnitTestBase 
             }
         }
 
-        Checkpoint = await Respawner.CreateAsync(ConnectionString, new RespawnerOptions()
+        await using (var connection = new SqlConnection(ConnectionString))
         {
-            TablesToIgnore = new Table[]
+            await connection.OpenAsync();
+            Checkpoint = await Respawner.CreateAsync(connection, new RespawnerOptions()
             {
-                "__EFMigrationsHistory"
-            }
-        });
+                TablesToIgnore = ["__EFMigrationsHistory"]
+            });
+        }
 
         IsInitialized = true;
         IsInitializing = false;
@@ -159,7 +151,8 @@ public abstract class SouthportUnitTestBase<TDbContext> : SouthportUnitTestBase 
 
     protected virtual async Task ResetState()
     {
-        await Checkpoint.ResetAsync(ConnectionString);
+        await using var connection = new SqlConnection(ConnectionString);
+        await Checkpoint.ResetAsync(connection);
     }
 
     protected virtual void InitializeDbContext()

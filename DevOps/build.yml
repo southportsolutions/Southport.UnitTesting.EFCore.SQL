@@ -16,16 +16,6 @@ jobs:
         feedsToUse: 'config'
         nugetConfigPath: 'nuget.config'
 
-    - task: SonarCloudPrepare@1
-      inputs:
-        SonarCloud: 'SonarCloud'
-        organization: '$(sonarCloudOrganization)'
-        scannerMode: 'MSBuild'
-        projectKey: '$(sonarCloudProjectKey)'
-        projectName: '$(sonarCloudProjectName)'
-        extraProperties: |
-          sonar.cs.opencover.reportsPaths=$(Agent.TempDirectory)/**/coverage.opencover.xml
-
     - task: DotNetCoreCLI@2
       displayName: Build and Pack
       inputs:
@@ -56,12 +46,6 @@ jobs:
         summaryFileLocation: '$(Agent.TempDirectory)/**/coverage.cobertura.xml'
         reportDirectory: '$(Agent.TempDirectory)'
         failIfCoverageEmpty: false
-
-    - task: SonarCloudAnalyze@1      
-
-    - task: SonarCloudPublish@1      
-      inputs:
-        pollingTimeoutSec: '300'
 
     - publish: $(Build.ArtifactStagingDirectory)
       artifact: $(artifactName)

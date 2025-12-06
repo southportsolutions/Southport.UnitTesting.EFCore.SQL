@@ -13,12 +13,18 @@ jobs:
         - download: current
           displayName: 'Download artifact'
           artifact: $(artifactName)
+      
+        - task: NuGetToolInstaller@1   # Minimum required NuGet version: 4.8.0.5385+.
+          displayName: 'NuGet Tool Installer'
 
-        - task: NuGetCommand@2
-          displayName: 'Push Nuget'
+        - task: NuGetAuthenticate@1
+          displayName: 'Auth to nuget.org'   # uses the NuGet service connection you created
           inputs:
-            command: 'push'
-            packagesToPush: '$(Pipeline.Workspace)/$(artifactName)/**/*.nupkg;!$(Pipeline.Workspace)/$(artifactName)/**/*.symbols.nupkg'
-            nuGetFeedType: ${{ variables.nugetFeedType }}
-            publishFeedCredentials: ${{ variables.publishFeedCredentials }}      
-            allowPackageConflicts: false
+            nuGetServiceConnections: nuget.org
+
+        - bash: |
+            source="https://api.nuget.org/v3/index.json"
+            find "$(Pipeline.Workspace)/$(artifactName)" -type f -name "*.nupkg" ! -name "*.symbols.nupkg" | while read package; do
+              dotnet nuget push "$package" --source "$source" --api-key az --skip-duplicate
+            done
+          displayName: 'dotnet nuget push'

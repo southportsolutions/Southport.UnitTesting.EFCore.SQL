@@ -13,16 +13,18 @@ jobs:
         - download: current
           displayName: 'Download artifact'
           artifact: $(artifactName)
+      
+        - task: NuGetToolInstaller@1   # Minimum required NuGet version: 4.8.0.5385+.
+          displayName: 'NuGet Tool Installer'
 
         - task: NuGetAuthenticate@1
           displayName: 'Auth to nuget.org'   # uses the NuGet service connection you created
+          inputs:
+            nuGetServiceConnections: nuget.org
 
-        - powershell: |
-            $source = "https://api.nuget.org/v3/index.json"
-            $apiKey = $Env:NUGET_AUTH_TOKEN
-            Get-ChildItem "$(Pipeline.Workspace)\$(artifactName)" -Recurse -Filter *.nupkg |
-              Where-Object { $_.Name -notlike "*.symbols.nupkg" } |
-              ForEach-Object {
-                dotnet nuget push $_.FullName --source $source --api-key $apiKey --skip-duplicate
-              }
+        - bash: |
+            source="https://api.nuget.org/v3/index.json"
+            find "$(Pipeline.Workspace)/$(artifactName)" -type f -name "*.nupkg" ! -name "*.symbols.nupkg" | while read package; do
+              dotnet nuget push "$package" --source "$source" --api-key az --skip-duplicate
+            done
           displayName: 'dotnet nuget push'

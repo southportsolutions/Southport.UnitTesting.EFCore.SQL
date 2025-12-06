@@ -1,5 +1,5 @@
 
-name: CI/CD
+name: Build and Deploy
 
 on:
   workflow_dispatch:
@@ -24,10 +24,6 @@ on:
   push:
     branches: [ main ]
     tags: [ 'release@*' ]
-
-env:
-  BUILD_CONFIGURATION: Release
-  PROJECT_NAME: Southport.UnitTesting.EFCore.SQL
 
 jobs:
   build-and-deploy:
@@ -124,4 +120,4 @@ jobs:
         env:
           NUGET_API_KEY: ${{ secrets.NUGETPUSH }}
           SOURCE: 'https://api.nuget.org/v3/index.json'
-        run: dotnet nuget push ${PROJECT_NAME}.${VERSION}.nupkg --source ${SOURCE} --api-key ${NUGET_API_KEY}
+        run: dotnet nuget push **/${{ env.PROJECT_NAME }}.${{ steps.version.outputs.version }}.nupkg --source ${SOURCE} --api-key ${NUGET_API_KEY}

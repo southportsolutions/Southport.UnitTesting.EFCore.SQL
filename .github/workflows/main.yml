@@ -2,6 +2,25 @@
 name: CI/CD
 
 on:
+  workflow_dispatch:
+      inputs:
+        logLevel:
+          description: 'Log level'
+          required: true
+          default: 'warning'
+          type: choice
+          options:
+          - info
+          - warning
+          - debug
+        tags:
+          description: 'Test scenario tags'
+          required: false
+          type: boolean
+        environment:
+          description: 'Environment to run tests against'
+          type: environment
+          required: true
   push:
     branches: [ main ]
     tags: [ 'release@*' ]
@@ -34,27 +53,63 @@ jobs:
             VERSION="1.0.0-alpha1"
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+      
+      - name: Turn on globstar and nullglob
+        shell: bash
+        run: |
+          shopt -s globstar nullglob
 
       - name: Restore
-        run: dotnet restore "**/${{ env.PROJECT_NAME }}.csproj" --configfile nuget.config
+        run: dotnet restore ./Southport.UnitTesting.EFCore.SQL.sln --configfile nuget.config
 
       - name: Build & Pack
         run: |
-          dotnet pack "**/${{ env.PROJECT_NAME }}.csproj" \
+          dotnet pack **/${{ env.PROJECT_NAME }}.csproj \
             --output "${{ github.workspace }}/artifacts" \
             --configuration "${{ env.BUILD_CONFIGURATION }}" \
             /p:Version="${{ steps.version.outputs.version }}"
 
-      - name: Test (NET9)
-        run: dotnet test "**/*Tests.csproj" --framework net9 --configuration "${{ env.BUILD_CONFIGURATION }}" --collect:"XPlat Code Coverage"
+      
+      - name: Test (NET9) and collect coverage
+        run: |
+          dotnet test ./tests/YourProject.Tests.csproj \
+            --framework net9 \
+            --configuration Release \
+            --collect:"XPlat Code Coverage" \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura,opencover
+          # Move/rename coverage file for NET9
+          find . -name 'coverage.cobertura.xml' -exec mv {} coverage.net9.cobertura.xml \;
 
-      - name: Test (NET10)
-        run: dotnet test "**/*Tests.csproj" --framework net10 --configuration "${{ env.BUILD_CONFIGURATION }}" --collect:"XPlat Code Coverage"
+      - name: Test (NET10) and collect coverage
+        run: |
+          dotnet test ./tests/YourProject.Tests.csproj \
+            --framework net10 \
+            --configuration Release \
+            --collect:"XPlat Code Coverage" \
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura,opencover
+            # Move/rename coverage file for NET10
+          find . -name 'coverage.cobertura.xml' -exec mv {} coverage.net10.cobertura.xml \;
 
-      - name: Code Coverage Report
-        uses: irongut/CodeCoverageSummary@v1.3.0
+      
+      - name: Upload NET9 coverage
+        uses: actions/upload-artifact@v4
         with:
-          filename: "**/coverage.cobertura.xml"
+          name: coverage-net9
+          path: coverage.net9.cobertura.xml
+          badge: true
+          fail_below_min: false
+          format: markdown
+          hide_branch_rate: false
+          hide_complexity: true
+          indicators: true
+          output: both
+          thresholds: '60 80'
+
+      - name: Upload NET10 coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-net10
+          path: coverage.net10.cobertura.xml
           badge: true
           fail_below_min: false
           format: markdown

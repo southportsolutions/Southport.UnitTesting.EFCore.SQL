@@ -25,6 +25,10 @@ on:
     branches: [ main ]
     tags: [ 'release@*' ]
 
+env:
+  PROJECT_NAME: ${{secrets.PROJECT_NAME}}
+  BUILD_CONFIGURATION: ${{secrets.BUILD_CONFIGURATION}}
+  
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest

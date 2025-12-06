@@ -72,7 +72,7 @@ jobs:
       
       - name: Test (NET9) and collect coverage
         run: |
-          dotnet test ./tests/YourProject.Tests.csproj \
+          dotnet test **/${{ env.PROJECT_NAME }}.Tests.csproj \
             --framework net9 \
             --configuration Release \
             --collect:"XPlat Code Coverage" \
@@ -82,7 +82,7 @@ jobs:
 
       - name: Test (NET10) and collect coverage
         run: |
-          dotnet test ./tests/YourProject.Tests.csproj \
+          dotnet test **/${{ env.PROJECT_NAME }}.Tests.csproj \
             --framework net10 \
             --configuration Release \
             --collect:"XPlat Code Coverage" \

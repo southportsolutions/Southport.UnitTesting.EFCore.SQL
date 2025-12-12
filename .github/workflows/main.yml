@@ -23,7 +23,9 @@ on:
           required: true
   push:
     branches: [ main ]
-    tags: [ 'release@*' ]
+    tags: [ 'release@*' ]    
+  pull_request:
+    branches: [ main ]
 
 env:
   PROJECT_NAME: ${{secrets.PROJECT_NAME}}

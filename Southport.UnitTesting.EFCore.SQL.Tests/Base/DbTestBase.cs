@@ -13,12 +13,12 @@ public class DbTestBase : SouthportUnitTestBase<TestDbContext>
         DockerSqlDatabaseUtilities.ContainerExpirationHours = 1;
     }
 
-    protected override async Task ResetState()
+    protected override async Task ResetState(CancellationToken cancellationToken = default)
     {
-        await base.ResetState();
+        await base.ResetState(cancellationToken);
 
         var testEntity = new FakeTestEntity().Generate();
         DbContext.Add(testEntity);
-        await DbContext.SaveChangesAsync();
+        await DbContext.SaveChangesAsync(cancellationToken);
     }
 }

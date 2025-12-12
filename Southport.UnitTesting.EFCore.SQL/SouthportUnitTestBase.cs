@@ -20,7 +20,7 @@ public abstract class SouthportUnitTestBase
     }
 
 
-    protected virtual async Task InitializeTest()
+    protected virtual async Task InitializeTest(CancellationToken cancellationToken = default)
     {
         InitializeDependencyInjection();
         await InitializeScope();

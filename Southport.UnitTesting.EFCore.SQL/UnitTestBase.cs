@@ -29,14 +29,14 @@ public abstract class SouthportUnitTestBase<TDbContext> : SouthportUnitTestBase 
     {
     }
 
-    protected override async Task InitializeTest()
+    protected override async Task InitializeTest(CancellationToken cancellationToken = default)
     {
         await InitializeServer();
         WriteServerInfoToLog();
 
         await InitializeScope();
 
-        await ResetState();
+        await ResetState(cancellationToken);
     }
 
     protected override async Task InitializeScope()
@@ -149,9 +149,10 @@ public abstract class SouthportUnitTestBase<TDbContext> : SouthportUnitTestBase 
 
     #endregion
 
-    protected virtual async Task ResetState()
+    protected virtual async Task ResetState(CancellationToken cancellationToken = default)
     {
         await using var connection = new SqlConnection(ConnectionString);
+        await connection.OpenAsync(cancellationToken);
         await Checkpoint.ResetAsync(connection);
     }
 

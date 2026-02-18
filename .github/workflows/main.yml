@@ -63,17 +63,14 @@ jobs:
 
       - name: Build & Pack
         run: |
-          shopt -s globstar nullglob
-          dotnet pack **/${{ env.PROJECT_NAME }}.csproj \
+          dotnet pack ${{ env.PROJECT_NAME }}/${{ env.PROJECT_NAME }}.csproj \
             --output "${{ github.workspace }}/artifacts" \
             --configuration "${{ env.BUILD_CONFIGURATION }}" \
             /p:Version="${{ steps.version.outputs.version }}"
 
-      
       - name: Test (NET9) and collect coverage
         run: |
-          shopt -s globstar nullglob
-          dotnet test **/${{ env.PROJECT_NAME }}.Tests.csproj \
+          dotnet test ${{ env.PROJECT_NAME }}.Tests/${{ env.PROJECT_NAME }}.Tests.csproj \
             --framework net9.0 \
             --configuration Release \
             --collect:"XPlat Code Coverage" \
@@ -83,13 +80,12 @@ jobs:
 
       - name: Test (NET10) and collect coverage
         run: |
-          shopt -s globstar nullglob
-          dotnet test **/${{ env.PROJECT_NAME }}.Tests.csproj \
-            --framework net10.0 \ 
+          dotnet test ${{ env.PROJECT_NAME }}.Tests/${{ env.PROJECT_NAME }}.Tests.csproj \
+            --framework net10.0 \
             --configuration Release \
             --collect:"XPlat Code Coverage" \
             -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
-            # Move/rename coverage file for NET10
+          # Move/rename coverage file for NET10
           find . -name 'coverage.cobertura.xml' -exec mv {} coverage.net10.cobertura.xml \;
 
       
@@ -110,6 +106,4 @@ jobs:
         env:
           NUGET_API_KEY: ${{ secrets.NUGETPUSH }}
           SOURCE: 'https://api.nuget.org/v3/index.json'
-        run: |
-          shopt -s globstar nullglob
-          dotnet nuget push **/${{ env.PROJECT_NAME }}.${{ steps.version.outputs.version }}.nupkg --source ${SOURCE} --api-key ${NUGET_API_KEY}
+        run: dotnet nuget push "${{ github.workspace }}/artifacts/${{ env.PROJECT_NAME }}.${{ steps.version.outputs.version }}.nupkg" --source ${SOURCE} --api-key ${NUGET_API_KEY}

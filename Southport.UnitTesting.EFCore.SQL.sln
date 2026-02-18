@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Southport.UnitTesting.EFCore.SQL", "Southport.UnitTesting.EFCore.SQL\Southport.UnitTesting.EFCore.SQL.csproj", "{1668D205-4048-4553-99A7-51C052BB0C5B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{AADCCC5F-7E1F-43ED-A933-3606E9891AE2}"
+	ProjectSection(SolutionItems) = preProject
+		.github\workflows\main.yml = .github\workflows\main.yml
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Southport.UnitTesting.EFCore.SQL.Tests", "Southport.UnitTesting.EFCore.SQL.Tests\Southport.UnitTesting.EFCore.SQL.Tests.csproj", "{F7A15D67-0DE1-4B1F-8175-CAA4D90B2A81}"
 EndProject

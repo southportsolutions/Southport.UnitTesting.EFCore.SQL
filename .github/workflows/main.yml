@@ -42,7 +42,9 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '9.x'
+          dotnet-version: |
+            9.x
+            10.x
 
       - name: Resolve version
         id: version
@@ -72,10 +74,10 @@ jobs:
         run: |
           shopt -s globstar nullglob
           dotnet test **/${{ env.PROJECT_NAME }}.Tests.csproj \
-            --framework net9 \
+            --framework net9.0 \
             --configuration Release \
             --collect:"XPlat Code Coverage" \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura,opencover
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
           # Move/rename coverage file for NET9
           find . -name 'coverage.cobertura.xml' -exec mv {} coverage.net9.cobertura.xml \;
 
@@ -83,10 +85,10 @@ jobs:
         run: |
           shopt -s globstar nullglob
           dotnet test **/${{ env.PROJECT_NAME }}.Tests.csproj \
-            --framework net10 \
+            --framework net10.0 \
             --configuration Release \
             --collect:"XPlat Code Coverage" \
-            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura,opencover
+            -- DataCollectionRunSettings.DataCollectors.DataCollector.Configuration.Format=cobertura
             # Move/rename coverage file for NET10
           find . -name 'coverage.cobertura.xml' -exec mv {} coverage.net10.cobertura.xml \;
 
@@ -96,28 +98,12 @@ jobs:
         with:
           name: coverage-net9
           path: coverage.net9.cobertura.xml
-          badge: true
-          fail_below_min: false
-          format: markdown
-          hide_branch_rate: false
-          hide_complexity: true
-          indicators: true
-          output: both
-          thresholds: '60 80'
 
       - name: Upload NET10 coverage
         uses: actions/upload-artifact@v4
         with:
           name: coverage-net10
           path: coverage.net10.cobertura.xml
-          badge: true
-          fail_below_min: false
-          format: markdown
-          hide_branch_rate: false
-          hide_complexity: true
-          indicators: true
-          output: both
-          thresholds: '60 80'
 
       - name: Publish to nuget.org (only on release tags)
         if: startsWith(github.ref, 'refs/tags/release@')

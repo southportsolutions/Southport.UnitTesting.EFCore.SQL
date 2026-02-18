@@ -28,12 +28,13 @@ public static class DockerSqlDatabaseUtilities
 
     public static async Task<string> EnsureDockerStartedAndGetContainerIdAndPortAsync(bool forceCleanup = false)
     {
-        if (!string.IsNullOrWhiteSpace(ActivePortNumber))
+        if (!string.IsNullOrWhiteSpace(ActivePortNumber) && !forceCleanup)
         {
             await CreateDatabaseIfDoesNotExist(ActivePortNumber);
             return ActivePortNumber;
         }
 
+        ActivePortNumber = null;
         await CleanupRunningContainers(forceCleanup ? 0 : ContainerExpirationHours);
         await CleanupRunningVolumes(forceCleanup ? 0 : ContainerExpirationHours);
         var dockerClient = GetDockerClient();

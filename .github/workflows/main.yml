@@ -28,8 +28,8 @@ on:
     branches: [ main ]
 
 env:
-  PROJECT_NAME: ${{secrets.PROJECT_NAME}}
-  BUILD_CONFIGURATION: ${{secrets.BUILD_CONFIGURATION}}
+  PROJECT_NAME: ${{vars.PROJECT_NAME}}
+  BUILD_CONFIGURATION: ${{vars.BUILD_CONFIGURATION}}
   
 jobs:
   build-and-deploy:
@@ -56,16 +56,12 @@ jobs:
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
       
-      - name: Turn on globstar and nullglob
-        shell: bash
-        run: |
-          shopt -s globstar nullglob
-
       - name: Restore
         run: dotnet restore ./Southport.UnitTesting.EFCore.SQL.sln --configfile nuget.config
 
       - name: Build & Pack
         run: |
+          shopt -s globstar nullglob
           dotnet pack **/${{ env.PROJECT_NAME }}.csproj \
             --output "${{ github.workspace }}/artifacts" \
             --configuration "${{ env.BUILD_CONFIGURATION }}" \
@@ -74,6 +70,7 @@ jobs:
       
       - name: Test (NET9) and collect coverage
         run: |
+          shopt -s globstar nullglob
           dotnet test **/${{ env.PROJECT_NAME }}.Tests.csproj \
             --framework net9 \
             --configuration Release \
@@ -84,6 +81,7 @@ jobs:
 
       - name: Test (NET10) and collect coverage
         run: |
+          shopt -s globstar nullglob
           dotnet test **/${{ env.PROJECT_NAME }}.Tests.csproj \
             --framework net10 \
             --configuration Release \
@@ -126,4 +124,6 @@ jobs:
         env:
           NUGET_API_KEY: ${{ secrets.NUGETPUSH }}
           SOURCE: 'https://api.nuget.org/v3/index.json'
-        run: dotnet nuget push **/${{ env.PROJECT_NAME }}.${{ steps.version.outputs.version }}.nupkg --source ${SOURCE} --api-key ${NUGET_API_KEY}
+        run: |
+          shopt -s globstar nullglob
+          dotnet nuget push **/${{ env.PROJECT_NAME }}.${{ steps.version.outputs.version }}.nupkg --source ${SOURCE} --api-key ${NUGET_API_KEY}

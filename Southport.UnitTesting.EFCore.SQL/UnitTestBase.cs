@@ -15,6 +15,7 @@ public abstract class SouthportUnitTestBase<TDbContext> : SouthportUnitTestBase 
     // Static: server-level state cached across test instances (per TDbContext type)
     private static bool _serverInitialized;
     private static readonly SemaphoreSlim _serverInitLock = new(1, 1);
+    private static readonly SemaphoreSlim _resetLock = new(1, 1);
     private static string _cachedConnectionString;
     private static Respawner _cachedCheckpoint;
 
@@ -163,10 +164,18 @@ public abstract class SouthportUnitTestBase<TDbContext> : SouthportUnitTestBase 
 
     protected virtual async Task ResetState(CancellationToken cancellationToken = default)
     {
-        DbContext.ChangeTracker.Clear();
-        await using var connection = new SqlConnection(ConnectionString);
-        await connection.OpenAsync(cancellationToken);
-        await Checkpoint.ResetAsync(connection);
+        await _resetLock.WaitAsync(cancellationToken);
+        try
+        {
+            DbContext.ChangeTracker.Clear();
+            await using var connection = new SqlConnection(ConnectionString);
+            await connection.OpenAsync(cancellationToken);
+            await Checkpoint.ResetAsync(connection);
+        }
+        finally
+        {
+            _resetLock.Release();
+        }
     }
 
     protected virtual void InitializeDbContext()

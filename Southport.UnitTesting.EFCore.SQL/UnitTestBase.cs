@@ -12,16 +12,15 @@ public abstract class SouthportUnitTestBase<TDbContext> : SouthportUnitTestBase 
 {
     protected virtual string MigrationAssembly => "Southport.EFCore.SQL";
 
-    protected bool IsInitialized;
-    protected bool IsInitializing;
-    
-    protected Respawner Checkpoint;
-    
+    // Static: server-level state cached across test instances (per TDbContext type)
+    private static bool _serverInitialized;
+    private static readonly SemaphoreSlim _serverInitLock = new(1, 1);
+    private static string _cachedConnectionString;
+    private static Respawner _cachedCheckpoint;
 
-    private string _dockerSqlPort;
+    protected Respawner Checkpoint;
 
     protected string ConnectionString;
-    
 
     protected TDbContext DbContext { get; set; }
 
@@ -64,55 +63,68 @@ public abstract class SouthportUnitTestBase<TDbContext> : SouthportUnitTestBase 
 
     protected async Task InitializeServer()
     {
-        if (IsInitialized) return;
-
-        if (IsInitializing)
+        if (_serverInitialized)
         {
-            do
-            {
-                Thread.Sleep(1000);
-            } while (IsInitializing && !IsInitialized);
+            ConnectionString = _cachedConnectionString;
+            Checkpoint = _cachedCheckpoint;
+            InitializeDependencyInjection(ConnectionString);
             return;
         }
 
-        IsInitializing = true;
-        var migrated = false;
-        var migrationAttempts = 0;
-        while (!migrated)
+        await _serverInitLock.WaitAsync();
+        try
         {
-
-            _dockerSqlPort = await DockerSqlDatabaseUtilities.EnsureDockerStartedAndGetContainerIdAndPortAsync(migrationAttempts>0);
-            ConnectionString = DockerSqlDatabaseUtilities.GetSqlConnectionString(_dockerSqlPort, true);
-
-            InitializeDependencyInjection(ConnectionString);
-            
-            try
+            // Double-check after acquiring the lock
+            if (_serverInitialized)
             {
-                await MigrateDatabase();
-                migrated = true;
+                ConnectionString = _cachedConnectionString;
+                Checkpoint = _cachedCheckpoint;
+                InitializeDependencyInjection(ConnectionString);
+                return;
             }
-            catch (Exception ex)
+
+            var migrated = false;
+            var migrationAttempts = 0;
+            while (!migrated)
             {
-                TestLogger.WriteLine($"Error migrating database: {ex.Message}");
-                migrationAttempts++;
-                if (migrationAttempts >= 2)
+                var dockerSqlPort = await DockerSqlDatabaseUtilities.EnsureDockerStartedAndGetContainerIdAndPortAsync(migrationAttempts > 0);
+                ConnectionString = DockerSqlDatabaseUtilities.GetSqlConnectionString(dockerSqlPort, true);
+
+                InitializeDependencyInjection(ConnectionString);
+
+                try
                 {
-                    throw new Exception($"Failed to migrate database after {migrationAttempts} attempts. Error: {ex.Message}");
+                    await MigrateDatabase();
+                    migrated = true;
+                }
+                catch (Exception ex)
+                {
+                    TestLogger.WriteLine($"Error migrating database: {ex.Message}");
+                    migrationAttempts++;
+                    if (migrationAttempts >= 2)
+                    {
+                        throw new Exception($"Failed to migrate database after {migrationAttempts} attempts. Error: {ex.Message}");
+                    }
                 }
             }
-        }
 
-        await using (var connection = new SqlConnection(ConnectionString))
-        {
-            await connection.OpenAsync();
-            Checkpoint = await Respawner.CreateAsync(connection, new RespawnerOptions()
+            await using (var connection = new SqlConnection(ConnectionString))
             {
-                TablesToIgnore = ["__EFMigrationsHistory"]
-            });
-        }
+                await connection.OpenAsync();
+                Checkpoint = await Respawner.CreateAsync(connection, new RespawnerOptions()
+                {
+                    TablesToIgnore = ["__EFMigrationsHistory"]
+                });
+            }
 
-        IsInitialized = true;
-        IsInitializing = false;
+            _cachedConnectionString = ConnectionString;
+            _cachedCheckpoint = Checkpoint;
+            _serverInitialized = true;
+        }
+        finally
+        {
+            _serverInitLock.Release();
+        }
     }
 
     protected override IConfigurationBuilder GetConfigurationBuilder(string connectionString)
@@ -151,6 +163,7 @@ public abstract class SouthportUnitTestBase<TDbContext> : SouthportUnitTestBase 
 
     protected virtual async Task ResetState(CancellationToken cancellationToken = default)
     {
+        DbContext.ChangeTracker.Clear();
         await using var connection = new SqlConnection(ConnectionString);
         await connection.OpenAsync(cancellationToken);
         await Checkpoint.ResetAsync(connection);

@@ -33,23 +33,35 @@ public static class DockerSqlDatabaseUtilities
             await CreateDatabaseIfDoesNotExist(ActivePortNumber);
             return ActivePortNumber;
         }
-        
+
         await CleanupRunningContainers(forceCleanup ? 0 : ContainerExpirationHours);
         await CleanupRunningVolumes(forceCleanup ? 0 : ContainerExpirationHours);
         var dockerClient = GetDockerClient();
 
-        // This call ensures that the latest SQL Server Docker image is pulled
-        await dockerClient.Images.CreateImageAsync(new ImagesCreateParameters
-        {
-            FromImage = $"{DbImage}:{DbImageTag}"
-        }, null, new Progress<JSONMessage>());
-
-        // create a volume, if one doesn't already exist
-        await ManageVolumes(dockerClient);
-
+        // Check for existing container before pulling the image
         var existingCont = await GetExistingContainer(dockerClient);
-        if (existingCont == null) return await CreateContainer(dockerClient);
-        if (existingCont.State != "exited") return existingCont.Ports.First().PublicPort.ToString();
+
+        if (existingCont == null)
+        {
+            // Only pull the image when we need to create a new container
+            await dockerClient.Images.CreateImageAsync(new ImagesCreateParameters
+            {
+                FromImage = $"{DbImage}:{DbImageTag}"
+            }, null, new Progress<JSONMessage>());
+
+            // create a volume, if one doesn't already exist
+            await ManageVolumes(dockerClient);
+
+            ActivePortNumber = await CreateContainer(dockerClient);
+            return ActivePortNumber;
+        }
+
+        if (existingCont.State != "exited")
+        {
+            ActivePortNumber = existingCont.Ports.First().PublicPort.ToString();
+            await CreateDatabaseIfDoesNotExist(ActivePortNumber);
+            return ActivePortNumber;
+        }
 
         await StartContainer(dockerClient, existingCont.ID);
 
